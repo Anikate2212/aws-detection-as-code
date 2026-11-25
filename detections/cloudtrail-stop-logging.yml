@@ -1,0 +1,44 @@
+# Detection: CloudTrail logging stopped or trail deleted.
+# Schema: see detections/README.md
+
+id: cloudtrail-stop-logging
+title: CloudTrail logging stopped or trail deleted
+status: draft # draft -> tested (after the simulation fires it in a real account)
+severity: high
+
+attack:
+  tactic: Defense Evasion
+  technique_id: T1562.008
+  technique: "Impair Defenses: Disable or Modify Cloud Logs"
+
+simulation:
+  tool: stratus-red-team
+  technique: aws.defense-evasion.cloudtrail-stop
+
+log_source: cloudtrail
+
+# EventBridge event pattern. Every API call recorded by CloudTrail arrives
+# in EventBridge with detail-type "AWS API Call via CloudTrail" and
+# source "aws.<service>".
+event_pattern:
+  source: ["aws.cloudtrail"]
+  detail-type: ["AWS API Call via CloudTrail"]
+  detail:
+    eventSource: ["cloudtrail.amazonaws.com"]
+    eventName: ["StopLogging", "DeleteTrail"]
+
+expected_evidence: >
+  CloudTrail event with eventSource cloudtrail.amazonaws.com and eventName
+  StopLogging (or DeleteTrail). requestParameters.name holds the trail name.
+  userIdentity.arn is the principal that stopped logging.
+
+false_positives:
+  - Planned teardown with terraform destroy. Expected caller is the Terraform
+    provisioner identity; anything else is suspicious.
+  - The Stratus simulation itself (creates and stops its own trail).
+
+response: notify # notify | contain
+
+# Overlap: the baseline repo already has a CIS metric-filter alarm for
+# CloudTrail configuration changes. That alarm gives a count. This rule
+# carries the full event and an ATT&CK tag to the responder.

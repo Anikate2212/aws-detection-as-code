@@ -1,0 +1,30 @@
+# Local git hooks. Install once per clone:
+#   pip install pre-commit
+#   pre-commit install
+# The install types below put hooks in both pre-commit and pre-push.
+# gitleaks itself must be on PATH (https://github.com/gitleaks/gitleaks).
+
+default_install_hook_types: [pre-commit, pre-push]
+
+repos:
+  - repo: local
+    hooks:
+      # Fast, every commit: formatting drift.
+      - id: terraform-fmt
+        name: terraform fmt
+        entry: terraform fmt -check -recursive terraform
+        language: system
+        pass_filenames: false
+        files: \.tf$
+        stages: [pre-commit]
+
+      # Every push: scan the full git history, not just the staged diff,
+      # so a secret committed and then "deleted" is still caught before
+      # it reaches GitHub.
+      - id: gitleaks
+        name: gitleaks (full history)
+        entry: gitleaks git --redact --verbose .
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]

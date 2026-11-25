@@ -1,0 +1,18 @@
+# Gitleaks config. Runs in the pre-push hook and in CI.
+# Default rules catch keys and tokens. The extra rule below catches what the
+# defaults miss: a real 12-digit AWS account ID inside an ARN. The project
+# brief says no account IDs in a public repo.
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "aws-account-id-in-arn"
+description = "AWS account ID inside an ARN"
+regex = '''arn:aws[a-z-]*:[a-z0-9-]+:[a-z0-9-]*:(\d{12}):'''
+secretGroup = 1
+keywords = ["arn:aws"]
+
+  # 123456789012 is the AWS documentation placeholder used in test fixtures.
+  [[rules.allowlists]]
+  regexes = ['''123456789012''']

@@ -1,0 +1,40 @@
+# ---- Terraform ----
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.tfstate.lock.info
+crash.log
+crash.*.log
+# tfvars hold the alert email and other per-account values
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+tfplan
+*.tfplan
+
+# ---- Lambda build artifacts (rebuilt from source on every plan) ----
+terraform/modules/*/build/
+
+# ---- Python ----
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+
+# ---- Simulation and investigation output ----
+# Raw CloudTrail/GuardDuty exports contain the account ID, ARNs and IPs.
+# Only redacted samples go in tests/events/.
+evidence/raw/
+stratus-red-team/
+*.ocsf.json
+
+# ---- Editors and OS ----
+.vscode/
+.idea/
+.DS_Store
