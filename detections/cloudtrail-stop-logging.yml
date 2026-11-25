@@ -3,7 +3,7 @@
 
 id: cloudtrail-stop-logging
 title: CloudTrail logging stopped or trail deleted
-status: draft # draft -> tested (after the simulation fires it in a real account)
+status: tested # draft -> tested (after the simulation fires it in a real account)
 severity: high
 
 attack:

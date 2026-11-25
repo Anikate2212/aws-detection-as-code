@@ -1,0 +1,50 @@
+{
+  "account": "123456789012",
+  "detail": {
+    "awsRegion": "us-east-1",
+    "eventCategory": "Management",
+    "eventID": "4db12793-b87a-4491-b5db-5efbe1f99ad8",
+    "eventName": "StopLogging",
+    "eventSource": "cloudtrail.amazonaws.com",
+    "eventTime": "2026-11-25T15:19:04Z",
+    "eventType": "AwsApiCall",
+    "eventVersion": "1.11",
+    "managementEvent": true,
+    "readOnly": false,
+    "recipientAccountId": "123456789012",
+    "requestID": "38e33d3c-f890-4715-9880-eb960c97683b",
+    "requestParameters": {
+      "name": "stratus-red-team-ct-stop-5e3335a7-trail"
+    },
+    "resources": [
+      {
+        "ARN": "arn:aws:cloudtrail:us-east-1:123456789012:trail/stratus-red-team-ct-stop-5e3335a7-trail",
+        "accountId": "123456789012",
+        "type": "AWS::CloudTrail::Trail"
+      }
+    ],
+    "responseElements": null,
+    "sourceIPAddress": "203.0.113.10",
+    "tlsDetails": {
+      "cipherSuite": "TLS_AES_128_GCM_SHA256",
+      "clientProvidedHostHeader": "cloudtrail.us-east-1.amazonaws.com",
+      "tlsVersion": "TLSv1.3"
+    },
+    "userAgent": "stratus-red-team_15503e0b-084d-4eff-b78f-36e768aab4c5",
+    "userIdentity": {
+      "accessKeyId": "AKIAEXAMPLEEXAMPLE00",
+      "accountId": "123456789012",
+      "arn": "arn:aws:iam::123456789012:user/anikate-cli",
+      "principalId": "AIDAEXAMPLEEXAMPLE00",
+      "type": "IAMUser",
+      "userName": "anikate-cli"
+    }
+  },
+  "detail-type": "AWS API Call via CloudTrail",
+  "id": "4db12793-b87a-4491-b5db-5efbe1f99ad8",
+  "region": "us-east-1",
+  "resources": [],
+  "source": "aws.cloudtrail",
+  "time": "2026-11-25T15:19:04Z",
+  "version": "0"
+}
