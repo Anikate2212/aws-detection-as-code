@@ -16,3 +16,10 @@ keywords = ["arn:aws"]
   # 123456789012 is the AWS documentation placeholder used in test fixtures.
   [[rules.allowlists]]
   regexes = ['''123456789012''']
+
+# Placeholders that tools/make_fixture.py writes when it redacts a real
+# event. They are shaped like real IDs on purpose so the fixture stays
+# realistic. Only this exact string is allowed; any other AKIA... key fails.
+[allowlist]
+description = "make_fixture.py redaction placeholders"
+regexes = ['''^(AKIA|ASIA|AIDA|AROA)EXAMPLEEXAMPLE00$''']
