@@ -90,14 +90,17 @@ def test_rule_fires_on_captured_event(path):
 
 @pytest.mark.parametrize("path", FIXTURES, ids=lambda p: p.stem)
 def test_rule_ignores_benign_variant(path):
-    """Same event with a different eventName must NOT match.
+    """Same event with a different eventName (or GuardDuty type) must NOT match.
 
     Catches an over-broad pattern (for example one that dropped eventName
     and fires on every CloudTrail API call).
     """
     event = json.loads(path.read_text())
     benign = copy.deepcopy(event)
-    benign["detail"]["eventName"] = "DescribeTrails"
+    if event.get("source") == "aws.guardduty":
+        benign["detail"]["type"] = "Recon:EC2/PortProbeUnprotectedPort"
+    else:
+        benign["detail"]["eventName"] = "DescribeTrails"
     assert not fires(RULES[path.stem], benign)
 
 

@@ -161,6 +161,10 @@ def handler(payload, context):
 
     # One JSON line per detection: searchable in CloudWatch Logs Insights.
     log.info(json.dumps({"finding": finding}, default=str))
+    # The exact event EventBridge delivered. Evidence for the responder, and
+    # the source for test fixtures of events that lookup-events never shows
+    # (GuardDuty findings). The log group is KMS-encrypted, 1-year retention.
+    log.info(json.dumps({"detection_id": detection.get("id"), "raw_event": event}, default=str))
 
     _sns_client().publish(
         TopicArn=os.environ["TOPIC_ARN"],
