@@ -1,0 +1,60 @@
+# Detection: S3 bucket policy changed to grant access outside the account.
+# Schema: see detections/README.md
+
+id: s3-bucket-policy-external-access
+title: S3 bucket policy grants access outside the account
+status: tested # Stratus 2026-11-26: alert and Sid deny within ~30 s
+severity: high
+
+attack:
+  tactic: Exfiltration
+  technique_id: T1537
+  technique: "Transfer Data to Cloud Account"
+
+simulation:
+  tool: stratus-red-team
+  technique: aws.exfiltration.s3-backdoor-bucket-policy
+
+log_source: cloudtrail
+
+# The pattern matches every successful PutBucketPolicy. Whether the new
+# policy grants access to ANOTHER account or to everyone needs the policy
+# parsed and compared with the bucket's own account, which a pattern cannot
+# do, so the triage Lambda decides (same split as iam-backdoor-access-key).
+# S3 events reach EventBridge in the bucket's Region; this stack covers
+# us-east-1 only (gap noted in the threat model).
+event_pattern:
+  source: ["aws.s3"]
+  detail-type: ["AWS API Call via CloudTrail"]
+  detail:
+    eventSource: ["s3.amazonaws.com"]
+    eventName: ["PutBucketPolicy"]
+    errorCode: [{ "exists": false }]
+
+expected_evidence: >
+  CloudTrail event with eventSource s3.amazonaws.com and eventName
+  PutBucketPolicy, no errorCode. requestParameters.bucketName is the bucket
+  and requestParameters.bucketPolicy the full new policy: an Allow statement
+  whose Principal is another account (arn:aws:iam::<other account>:root in
+  the simulation) or "*". userIdentity.arn is who changed it.
+
+false_positives:
+  - Intended cross-account sharing (a log archive account, a partner, a
+    replication target). The Lambda alerts on every bucket but only contains
+    buckets tagged detection-demo=true, so real shares are never touched.
+  - Service principals (CloudFront, CloudTrail, ELB log delivery) are not
+    other accounts; the Lambda ignores them.
+  - The Stratus simulation itself (creates a bucket, then grants a
+    fictitious external account read access).
+
+response: contain # notify | contain
+
+# Containment (triage Lambda), only on buckets tagged detection-demo=true:
+#  - another account granted: append a Deny statement with a fixed Sid
+#    (DetectionAsCodeDenyOtherAccounts) for every principal outside this
+#    account that is not an AWS service. The attacker's statement stays in
+#    place as evidence. Undo: remove that one statement.
+#  - granted to everyone ("*"): turn on S3 Block Public Access for the bucket.
+#    Undo: aws s3api delete-public-access-block --bucket <bucket>
+#  - tag the bucket detection-as-code-contained=<event time>.
+# Never deletes the bucket, its objects or its policy.

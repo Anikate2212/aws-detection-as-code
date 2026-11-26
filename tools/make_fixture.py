@@ -16,7 +16,8 @@ which never appear in lookup-events):
 Why: the "fires" test replays a REAL event that the simulation produced,
 not a hand-written one, so the fixture proves the pattern matches what
 AWS actually emits. Redaction runs before anything touches the repo:
-  - the account ID (exact match, plus any other 12-digit number)
+  - the account ID (exact match) -> 123456789012, any other 12-digit
+    number (another account) -> 111122223333
   - access key IDs (AKIA/ASIA) and IAM unique IDs (AIDA/AROA)
   - every public IPv4 address (replaced with a TEST-NET-3 documentation IP)
   - GuardDuty geolocation of the caller (city, country, ISP, coordinates)
@@ -35,12 +36,16 @@ import re
 import sys
 
 FAKE_ACCOUNT = "123456789012"  # allowlisted in .gitleaks.toml
+OTHER_ACCOUNT = "111122223333"  # AWS docs placeholder for a second account, also allowlisted
 FAKE_IP = "203.0.113.10"  # RFC 5737 documentation range
 
 SUBS = [
     (re.compile(r"\b(AKIA|ASIA)[A-Z0-9]{16}\b"), r"\1EXAMPLEEXAMPLE00"),
     (re.compile(r"\b(AIDA|AROA)[A-Z0-9]{12,}\b"), r"\1EXAMPLEEXAMPLE00"),
-    (re.compile(r"\b\d{12}\b"), FAKE_ACCOUNT),
+    # Any other 12-digit number is another account (for example the outside
+    # account a backdoored bucket policy grants). It gets a DIFFERENT
+    # placeholder so the fixture still shows "someone else's account".
+    (re.compile(r"\b\d{12}\b"), lambda m: m.group(0) if m.group(0) == FAKE_ACCOUNT else OTHER_ACCOUNT),
 ]
 
 

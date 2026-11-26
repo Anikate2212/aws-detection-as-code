@@ -1,0 +1,84 @@
+{
+  "account": "123456789012",
+  "detail": {
+    "additionalEventData": {
+      "AuthenticationMethod": "AuthHeader",
+      "CipherSuite": "TLS_AES_128_GCM_SHA256",
+      "SignatureVersion": "SigV4",
+      "bytesTransferredIn": 412,
+      "bytesTransferredOut": 0,
+      "endTime": 1795713764222,
+      "httpStatusCode": 204,
+      "startTime": 1795713764118,
+      "x-amz-id-2": "PcO07oLHUDF8EVwarAr1CQioeqZTtGSAI4FFK9Yxuu9tsOpEpkoOoer0Jhs1pjvjk01z717XgRLYNa82SR8xHWg4zaOmc8V/"
+    },
+    "awsRegion": "us-east-1",
+    "eventCategory": "Management",
+    "eventID": "b6b33335-907b-4e51-a2c2-97b5b82fb009",
+    "eventName": "PutBucketPolicy",
+    "eventSource": "s3.amazonaws.com",
+    "eventTime": "2026-11-26T17:22:44Z",
+    "eventType": "AwsApiCall",
+    "eventVersion": "1.11",
+    "managementEvent": true,
+    "readOnly": false,
+    "recipientAccountId": "123456789012",
+    "requestID": "WTBKKW84DVSPD1HM",
+    "requestParameters": {
+      "Host": "stratus-red-team-bdbp-9e2a3d24.s3.us-east-1.amazonaws.com",
+      "bucketName": "stratus-red-team-bdbp-9e2a3d24",
+      "bucketPolicy": {
+        "Statement": [
+          {
+            "Action": [
+              "s3:GetObject",
+              "s3:GetBucketLocation",
+              "s3:ListBucket"
+            ],
+            "Effect": "Allow",
+            "Principal": {
+              "AWS": "arn:aws:iam::111122223333:root"
+            },
+            "Resource": [
+              "arn:aws:s3:::stratus-red-team-bdbp-9e2a3d24/*",
+              "arn:aws:s3:::stratus-red-team-bdbp-9e2a3d24"
+            ]
+          }
+        ],
+        "Version": "2012-10-17"
+      },
+      "policy": ""
+    },
+    "resources": [
+      {
+        "ARN": "arn:aws:s3:::stratus-red-team-bdbp-9e2a3d24",
+        "accountId": "123456789012",
+        "type": "AWS::S3::Bucket"
+      }
+    ],
+    "responseElements": null,
+    "sourceIPAddress": "203.0.113.10",
+    "tlsDetails": {
+      "cipherSuite": "TLS_AES_128_GCM_SHA256",
+      "clientProvidedHostHeader": "stratus-red-team-bdbp-9e2a3d24.s3.us-east-1.amazonaws.com",
+      "keyExchange": "X25519MLKEM768",
+      "tlsVersion": "TLSv1.3"
+    },
+    "userAgent": "[stratus-red-team_2b8d7ccb-4c57-4800-9017-fd5945462da7]",
+    "userIdentity": {
+      "accessKeyId": "AKIAEXAMPLEEXAMPLE00",
+      "accountId": "123456789012",
+      "arn": "arn:aws:iam::123456789012:user/anikate-cli",
+      "principalId": "AIDAEXAMPLEEXAMPLE00",
+      "type": "IAMUser",
+      "userName": "anikate-cli"
+    }
+  },
+  "detail-type": "AWS API Call via CloudTrail",
+  "id": "9804d994-578f-abbb-edde-a5fbd22a46e9",
+  "region": "us-east-1",
+  "resources": [],
+  "source": "aws.s3",
+  "time": "2026-11-26T17:22:44Z",
+  "version": "0"
+}

@@ -109,6 +109,22 @@ data "aws_iam_policy_document" "triage" {
     resources = [for u in var.protected_users : "${local.user_arn_prefix}/${u}"]
   }
 
+  # Containment for s3-bucket-policy-external-access. The code acts only on
+  # buckets tagged detection-demo=true (checked before any write); IAM
+  # cannot express that for these S3 actions, so the tag check is in code
+  # and the actions are limited to these five (no delete of any kind).
+  statement {
+    sid = "ContainBucketPolicies"
+    actions = [
+      "s3:GetBucketTagging",
+      "s3:PutBucketTagging",
+      "s3:GetBucketPolicy",
+      "s3:PutBucketPolicy",
+      "s3:PutBucketPublicAccessBlock",
+    ]
+    resources = ["arn:${data.aws_partition.current.partition}:s3:::*"]
+  }
+
   # X-Ray does not support resource-level permissions.
   statement {
     sid       = "Tracing"

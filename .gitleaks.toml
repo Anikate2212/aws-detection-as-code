@@ -13,9 +13,10 @@ regex = '''arn:aws[a-z-]*:[a-z0-9-]+:[a-z0-9-]*:(\d{12}):'''
 secretGroup = 1
 keywords = ["arn:aws"]
 
-  # 123456789012 is the AWS documentation placeholder used in test fixtures.
+  # 123456789012 (this account) and 111122223333 (another account) are the
+  # AWS documentation placeholders make_fixture.py writes into fixtures.
   [[rules.allowlists]]
-  regexes = ['''123456789012''']
+  regexes = ['''^(123456789012|111122223333)$''']
 
 # Known non-secrets in test fixtures. Each entry is an exact, anchored
 # value, so anything else of the same shape still fails.
