@@ -71,3 +71,17 @@ def test_other_accounts_get_a_different_placeholder():
     principal = event["detail"]["requestParameters"]["bucketPolicy"]["Statement"][0]["Principal"]["AWS"]
     assert principal == "arn:aws:iam::111122223333:root"
     assert outside not in out.stdout and REAL not in out.stdout
+
+
+def test_console_sign_in_gets_its_own_detail_type():
+    record = {
+        "eventSource": "signin.amazonaws.com", "eventName": "ConsoleLogin",
+        "eventType": "AwsConsoleSignIn", "eventTime": "2026-01-01T00:00:00Z",
+        "awsRegion": "us-east-1", "sourceIPAddress": "98.1.2.3", "recipientAccountId": REAL,
+        "additionalEventData": {"MFAUsed": "No"}, "responseElements": {"ConsoleLogin": "Success"},
+    }
+    out = run({"Events": [{"CloudTrailEvent": json.dumps(record)}]})
+    assert out.returncode == 0, out.stderr
+    event = json.loads(out.stdout)
+    assert event["source"] == "aws.signin"
+    assert event["detail-type"] == "AWS Console Sign In via CloudTrail"

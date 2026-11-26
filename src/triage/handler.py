@@ -283,6 +283,8 @@ def summarize(detection: dict, event: dict) -> dict:
                 "source_ip": detail.get("sourceIPAddress"),
                 "user_agent": detail.get("userAgent"),
                 "request_parameters": detail.get("requestParameters"),
+                # Sign-in events: MFAUsed, LoginTo, MobileVersion.
+                "additional_event_data": detail.get("additionalEventData"),
                 "error_code": detail.get("errorCode"),
                 "event_id": detail.get("eventID"),
             }

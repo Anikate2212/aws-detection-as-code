@@ -1,0 +1,46 @@
+{
+  "account": "123456789012",
+  "detail": {
+    "additionalEventData": {
+      "LoginTo": "https://console.aws.amazon.com/console/home",
+      "MFAUsed": "No",
+      "MobileVersion": "No"
+    },
+    "awsRegion": "global",
+    "eventCategory": "Management",
+    "eventID": "d64702c1-81e1-46ed-bf36-8821f363b2c7",
+    "eventName": "ConsoleLogin",
+    "eventSource": "signin.amazonaws.com",
+    "eventTime": "2026-11-26T17:29:49Z",
+    "eventType": "AwsConsoleSignIn",
+    "eventVersion": "1.11",
+    "managementEvent": true,
+    "readOnly": false,
+    "recipientAccountId": "123456789012",
+    "requestParameters": null,
+    "responseElements": {
+      "ConsoleLogin": "Success"
+    },
+    "sourceIPAddress": "203.0.113.10",
+    "tlsDetails": {
+      "cipherSuite": "TLS_AES_128_GCM_SHA256",
+      "clientProvidedHostHeader": "signin.aws.amazon.com",
+      "tlsVersion": "TLSv1.3"
+    },
+    "userAgent": "stratus-red-team_fd54adbc-2e66-48f7-a2fb-fa690a122f8c",
+    "userIdentity": {
+      "accountId": "123456789012",
+      "arn": "arn:aws:iam::123456789012:user/stratus-red-team-nmfalu-fd54adbc",
+      "principalId": "AIDAEXAMPLEEXAMPLE00",
+      "type": "IAMUser",
+      "userName": "stratus-red-team-nmfalu-fd54adbc"
+    }
+  },
+  "detail-type": "AWS Console Sign In via CloudTrail",
+  "id": "6fe91704-dd1b-9793-2764-07da627730e3",
+  "region": "us-east-1",
+  "resources": [],
+  "source": "aws.signin",
+  "time": "2026-11-26T17:29:49Z",
+  "version": "0"
+}

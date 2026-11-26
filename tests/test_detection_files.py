@@ -77,7 +77,9 @@ def test_event_pattern_matches_log_source(path):
 
     assert "source" in pattern and "detail-type" in pattern
     if rule["log_source"] == "cloudtrail":
-        assert pattern["detail-type"] == ["AWS API Call via CloudTrail"]
+        # Console sign-ins arrive with their own detail-type.
+        assert pattern["detail-type"] in (["AWS API Call via CloudTrail"],
+                                          ["AWS Console Sign In via CloudTrail"])
     else:
         assert pattern["source"] == ["aws.guardduty"]
         assert pattern["detail-type"] == ["GuardDuty Finding"]

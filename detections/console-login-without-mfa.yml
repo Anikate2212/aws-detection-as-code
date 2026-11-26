@@ -1,0 +1,57 @@
+# Detection: IAM user signs in to the AWS console without MFA.
+# Schema: see detections/README.md
+
+id: console-login-without-mfa
+title: Console sign-in without MFA
+status: tested # Stratus 2026-11-26: alert 1 s after sign-in
+severity: medium
+
+attack:
+  tactic: Initial Access
+  technique_id: T1078.004
+  technique: "Valid Accounts: Cloud Accounts"
+
+simulation:
+  tool: stratus-red-team
+  technique: aws.initial-access.console-login-without-mfa
+
+log_source: cloudtrail
+
+# Console sign-ins are not API calls: EventBridge delivers them with their
+# own detail-type and source. Only SUCCESSFUL sign-ins where MFA was not
+# used match. Failed attempts (password spraying) are a different signal
+# and would suit a count rule instead.
+# IAM user console sign-ins are recorded in us-east-1, where this stack runs.
+event_pattern:
+  source: ["aws.signin"]
+  detail-type: ["AWS Console Sign In via CloudTrail"]
+  detail:
+    eventSource: ["signin.amazonaws.com"]
+    eventName: ["ConsoleLogin"]
+    additionalEventData:
+      MFAUsed: ["No"]
+    responseElements:
+      ConsoleLogin: ["Success"]
+
+expected_evidence: >
+  CloudTrail event with eventSource signin.amazonaws.com, eventName
+  ConsoleLogin, eventType AwsConsoleSignIn. responseElements.ConsoleLogin is
+  Success and additionalEventData.MFAUsed is No. userIdentity.arn is the IAM
+  user, sourceIPAddress and userAgent show where the session came from.
+
+false_positives:
+  - An IAM user who has not enrolled MFA yet (new hire, forgotten setup).
+    The finding is still correct, and the fix is enforcing MFA (an IAM policy
+    that denies everything without aws:MultiFactorAuthPresent), not
+    suppressing the alert.
+  - Federated or IAM Identity Center sign-ins report MFA differently and are
+    out of scope; this rule covers IAM users.
+  - The Stratus simulation itself (creates a user with a console password,
+    then signs in).
+
+response: notify # notify | contain
+
+# Possible containment (not automated): delete the user's login profile
+# (console password) or attach a deny-all-without-MFA policy. Not automated
+# because a missing MFA device is usually a hygiene gap, not an intrusion,
+# and locking out a real user on a false positive costs more than an alert.

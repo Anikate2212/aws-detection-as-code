@@ -124,7 +124,8 @@ def main() -> int:
     envelope = {
         "version": "0",
         "id": record.get("eventID", "00000000-0000-0000-0000-000000000000"),
-        "detail-type": "AWS API Call via CloudTrail",
+        "detail-type": ("AWS Console Sign In via CloudTrail" if record.get("eventType") == "AwsConsoleSignIn"
+                        else "AWS API Call via CloudTrail"),
         "source": "aws." + record["eventSource"].split(".")[0],
         "account": record.get("recipientAccountId", args.account),
         "time": record["eventTime"],

@@ -127,3 +127,19 @@ def test_exists_operator_semantics():
     assert not matches({"a": [{"exists": False}]}, {"a": 1})
     assert matches({"a": [{"exists": True}]}, {"a": 1})
     assert not matches({"a": [{"exists": True}]}, {})
+
+
+@pytest.mark.parametrize("field,value", [
+    (("additionalEventData", "MFAUsed"), "Yes"),
+    (("responseElements", "ConsoleLogin"), "Failure"),
+])
+def test_console_login_needs_success_without_mfa(field, value):
+    """MFA sign-ins and failed sign-ins must not fire console-login-without-mfa."""
+    path = EVENTS_DIR / "console-login-without-mfa.json"
+    if not path.exists():
+        pytest.skip("fixture not captured yet")
+    event = json.loads(path.read_text())
+    variant = copy.deepcopy(event)
+    variant["detail"][field[0]][field[1]] = value
+    assert fires(RULES["console-login-without-mfa"], event)
+    assert not fires(RULES["console-login-without-mfa"], variant)
