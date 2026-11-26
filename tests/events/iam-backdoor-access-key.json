@@ -1,0 +1,50 @@
+{
+  "account": "123456789012",
+  "detail": {
+    "awsRegion": "us-east-1",
+    "eventCategory": "Management",
+    "eventID": "9cc259d3-9fd1-4044-ac5f-dcff4bc02c2d",
+    "eventName": "CreateAccessKey",
+    "eventSource": "iam.amazonaws.com",
+    "eventTime": "2026-11-26T16:45:47Z",
+    "eventType": "AwsApiCall",
+    "eventVersion": "1.11",
+    "managementEvent": true,
+    "readOnly": false,
+    "recipientAccountId": "123456789012",
+    "requestID": "23692f1e-0117-48e5-8478-1a02bb76f83c",
+    "requestParameters": {
+      "userName": "stratus-red-team-backdoor-964b901e-usr"
+    },
+    "responseElements": {
+      "accessKey": {
+        "accessKeyId": "AKIAEXAMPLEEXAMPLE00",
+        "createDate": "2026-11-26T16:45:47Z",
+        "status": "Active",
+        "userName": "stratus-red-team-backdoor-964b901e-usr"
+      }
+    },
+    "sourceIPAddress": "203.0.113.10",
+    "tlsDetails": {
+      "cipherSuite": "TLS_AES_128_GCM_SHA256",
+      "clientProvidedHostHeader": "iam.amazonaws.com",
+      "tlsVersion": "TLSv1.3"
+    },
+    "userAgent": "stratus-red-team_964b901e-a925-4900-9474-0f1d5cbff4ce",
+    "userIdentity": {
+      "accessKeyId": "AKIAEXAMPLEEXAMPLE00",
+      "accountId": "123456789012",
+      "arn": "arn:aws:iam::123456789012:user/anikate-cli",
+      "principalId": "AIDAEXAMPLEEXAMPLE00",
+      "type": "IAMUser",
+      "userName": "anikate-cli"
+    }
+  },
+  "detail-type": "AWS API Call via CloudTrail",
+  "id": "9cc259d3-9fd1-4044-ac5f-dcff4bc02c2d",
+  "region": "us-east-1",
+  "resources": [],
+  "source": "aws.iam",
+  "time": "2026-11-26T16:45:47Z",
+  "version": "0"
+}

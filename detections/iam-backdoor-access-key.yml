@@ -1,0 +1,54 @@
+# Detection: access key created for an IAM user (backdoor persistence).
+# Schema: see detections/README.md
+
+id: iam-backdoor-access-key
+title: Access key created for another IAM user
+status: tested # draft -> tested (after the simulation fires it in a real account)
+severity: high
+
+attack:
+  tactic: Persistence
+  technique_id: T1098.001
+  technique: "Account Manipulation: Additional Cloud Credentials"
+
+simulation:
+  tool: stratus-red-team
+  technique: aws.persistence.iam-backdoor-user
+
+log_source: cloudtrail
+
+# IAM is a global service: its CloudTrail events reach EventBridge in
+# us-east-1 only, which is why this stack is deployed there.
+# The pattern matches every successful CreateAccessKey. Whether the caller
+# created a key for SOMEONE ELSE cannot be expressed in a pattern (no
+# field-to-field comparison), so the triage Lambda makes that decision.
+event_pattern:
+  source: ["aws.iam"]
+  detail-type: ["AWS API Call via CloudTrail"]
+  detail:
+    eventSource: ["iam.amazonaws.com"]
+    eventName: ["CreateAccessKey"]
+    errorCode: [{ "exists": false }]
+
+expected_evidence: >
+  CloudTrail event with eventSource iam.amazonaws.com and eventName
+  CreateAccessKey, no errorCode. requestParameters.userName is the user that
+  received the key; userIdentity.arn is who created it. They differ for a
+  backdoor. responseElements.accessKey.accessKeyId is the new key (the secret
+  is never logged).
+
+false_positives:
+  - An administrator creating a key for a service user on request. The
+    containment disables it; the admin re-enables it with one command from the
+    alert email after confirming the request.
+  - Users creating their own key (no userName in the request, or the caller is
+    the same user). The Lambda alerts but does not contain.
+  - The Stratus simulation itself (creates a user, then a key for it).
+
+response: contain # notify | contain
+
+# Containment (triage Lambda): if the key's owner is not the caller and is
+# not a protected admin, set the new key to Inactive. Reversible:
+#   aws iam update-access-key --user-name <user> --access-key-id <key> --status Active
+# Protected admins are also covered by an explicit IAM Deny on the Lambda
+# role, so a bug in the code still cannot lock the operator out.

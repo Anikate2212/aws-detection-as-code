@@ -20,3 +20,9 @@ variable "alert_kms_key_id" {
   description = "Key ID of the baseline KMS key that encrypts the alert topic. Set in terraform.tfvars (gitignored)."
   type        = string
 }
+
+variable "protected_users" {
+  description = "IAM users that containment never touches (enforced in code and by an explicit IAM Deny)"
+  type        = list(string)
+  default     = ["anikate-cli"]
+}

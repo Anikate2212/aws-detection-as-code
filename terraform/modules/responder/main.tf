@@ -11,6 +11,12 @@
 # ==========================================================================
 
 data "aws_region" "current" {}
+data "aws_caller_identity" "current" {}
+data "aws_partition" "current" {}
+
+locals {
+  user_arn_prefix = "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:user"
+}
 
 data "archive_file" "triage" {
   type        = "zip"
@@ -86,6 +92,23 @@ data "aws_iam_policy_document" "triage" {
     resources = [aws_sqs_queue.dlq.arn]
   }
 
+  # Containment for iam-backdoor-access-key: set a key Inactive. Only this
+  # one IAM write action; no delete, no policy or user changes.
+  statement {
+    sid       = "ContainBackdoorKeys"
+    actions   = ["iam:UpdateAccessKey"]
+    resources = ["${local.user_arn_prefix}/*"]
+  }
+
+  # Belt and braces: even if the code is wrong, the function can never
+  # disable an operator's keys. Explicit Deny beats any Allow.
+  statement {
+    sid       = "NeverTouchProtectedAdmins"
+    effect    = "Deny"
+    actions   = ["iam:UpdateAccessKey"]
+    resources = [for u in var.protected_users : "${local.user_arn_prefix}/${u}"]
+  }
+
   # X-Ray does not support resource-level permissions.
   statement {
     sid       = "Tracing"
@@ -105,7 +128,7 @@ resource "aws_lambda_function" "triage" {
   #checkov:skip=CKV_AWS_117:No VPC. The function only calls public AWS APIs (SNS, and IAM for containment later); a VPC would need NAT or endpoints at extra cost with no data-path benefit.
   #checkov:skip=CKV_AWS_272:Code signing needs AWS Signer and a signing profile; out of scope for a single-author portfolio repo. Code integrity comes from git plus CI.
   #checkov:skip=CKV_AWS_115:Reserved concurrency would cut into the account's unreserved pool, which is only 10 on new accounts. Volume is a handful of events per day.
-  #checkov:skip=CKV_AWS_173:The only environment variable is the SNS topic ARN, which is not a secret. Lambda encrypts environment variables at rest with an AWS-managed key by default.
+  #checkov:skip=CKV_AWS_173:Environment variables hold only the SNS topic ARN and the protected user names, neither of which is a secret. Lambda encrypts environment variables at rest with an AWS-managed key by default.
   function_name    = "${var.project_name}-triage"
   description      = "Formats detection events and publishes alerts to the baseline SNS topic"
   role             = aws_iam_role.triage.arn
@@ -119,7 +142,8 @@ resource "aws_lambda_function" "triage" {
 
   environment {
     variables = {
-      TOPIC_ARN = var.topic_arn
+      TOPIC_ARN       = var.topic_arn
+      PROTECTED_USERS = join(",", var.protected_users)
     }
   }
 

@@ -28,6 +28,8 @@ module "responder" {
   source_dir   = "${path.root}/../src/triage"
   topic_arn    = data.aws_sns_topic.alerts.arn
   kms_key_arn  = data.aws_kms_key.alerts.arn
+
+  protected_users = var.protected_users
 }
 
 module "detections" {
