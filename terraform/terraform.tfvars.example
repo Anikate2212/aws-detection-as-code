@@ -1,3 +1,8 @@
 # Copy to terraform.tfvars (gitignored) if you override defaults.
 # aws_region   = "us-east-1"
 # project_name = "detection-as-code"
+
+# Required: key ID of the baseline KMS key on the alert topic. Find it with:
+#   aws sns get-topic-attributes --topic-arn <alert topic ARN> \
+#     --query Attributes.KmsMasterKeyId --output text
+# alert_kms_key_id = "00000000-0000-0000-0000-000000000000"
