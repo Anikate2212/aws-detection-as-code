@@ -8,6 +8,17 @@ deployed them with Terraform, and built a Python Lambda that alerts on every
 detection and automatically contains two of them. Every detection has a test
 that replays the real event it was built from.
 
+**Results:** 6 detections mapped to MITRE ATT&CK (5 proven with live
+attack simulations), 2 contained automatically, alert 1 second after a
+console sign-in without MFA, 70 automated tests including replays of the
+real attack events, $0.52 total
+AWS spend.
+
+**Stack:** Terraform, Python, AWS EventBridge, GuardDuty, CloudTrail,
+CloudWatch, KMS, MITRE ATT&CK, Stratus Red Team, GitHub Actions.
+
+![Containment alert email for the backdoor access key](docs/evidence/backdoor-key-contained.png)
+
 Builds on [cloud-security-baseline](https://github.com/Anikate2212/cloud-security-baseline),
 which provides CloudTrail, GuardDuty, the alert topic and the budget.
 
@@ -22,18 +33,30 @@ clicked together in a console where nobody can tell what changed.
 ## Architecture
 
 ```mermaid
-flowchart LR
-    A[API call or console sign-in] --> CT[CloudTrail<br/>baseline trail]
-    GD[GuardDuty<br/>baseline detector] -->|finding| EB
-    CT -->|management events| EB[EventBridge<br/>one rule per YAML file]
-    CT -->|log group| MF[Metric filter + alarm<br/>count rules]
-    EB -->|rule metadata + event| L[Triage Lambda<br/>Python 3.13]
-    L -->|contain| C[Disable key /<br/>deny other accounts]
-    L --> SNS[Baseline SNS topic<br/>KMS-encrypted]
+flowchart TB
+    subgraph Sources
+        CT[CloudTrail<br/>API calls and sign-ins]
+        GD[GuardDuty<br/>findings]
+    end
+    subgraph Detect
+        EB[EventBridge<br/>one rule per YAML file]
+        MF[Metric filter + alarm<br/>count rules]
+    end
+    subgraph Respond
+        L[Triage Lambda<br/>Python 3.13]
+        C[Contain<br/>disable key, deny other accounts]
+        DLQ[SQS dead-letter queue]
+    end
+    SNS[SNS topic, KMS-encrypted] --> E[Email alert]
+
+    CT --> EB
+    GD --> EB
+    CT --> MF
+    EB --> L
+    L --> C
+    L --> SNS
     MF --> SNS
-    SNS --> E[Email]
-    EB -.->|failed delivery| DLQ[SQS dead-letter queue]
-    L -.->|failed after retries| DLQ
+    L -.->|failed delivery| DLQ
 ```
 
 - **Single-event rules** (5 of 6): an EventBridge pattern sends the event to
@@ -230,6 +253,19 @@ deleted too, so export any evidence first.
 - **Scanners differ by version.** CI's gitleaks 8.24 flagged a placeholder
   that local 8.30 allowed. I fixed it with an anchored allowlist instead of
   rewriting history.
+
+## What I'd do next
+
+- **Separate deploy role.** Run Terraform as its own role so detections can
+  tell a pipeline change from a person, which removes the biggest source of
+  false positives I hit.
+- **Multiple accounts.** Use AWS Organizations with a delegated security
+  account: an organization trail, GuardDuty administrator, and EventBridge
+  rules forwarding from every account and Region (closes the single-Region gap).
+- **Better routing.** Send alerts to Slack or a ticket queue with an owner,
+  and alarm on the dead-letter queue so a failed alert is never silent.
+
+The full list of gaps is in the [threat model](docs/threat-model.md#known-gaps).
 
 ## Repository layout
 
