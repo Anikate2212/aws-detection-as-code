@@ -16,9 +16,11 @@ RULE_FILES = sorted(DETECTIONS_DIR.glob("*.yml"))
 
 REQUIRED_TOP = {
     "id", "title", "status", "severity", "attack", "simulation",
-    "log_source", "event_pattern", "expected_evidence", "false_positives",
-    "response",
+    "log_source", "expected_evidence", "false_positives", "response",
 }
+# Each rule is EITHER a single-event EventBridge rule (event_pattern) OR a
+# count rule on the trail's log group (metric_filter), never both.
+KINDS = {"event_pattern", "metric_filter"}
 ATTACK_ID = re.compile(r"^T\d{4}(\.\d{3})?$")
 SOURCE_FOR_LOG = {"cloudtrail": None, "guardduty": "aws.guardduty"}
 
@@ -54,10 +56,23 @@ def test_rule_schema(path):
     assert rule["expected_evidence"].strip()
     assert isinstance(rule["false_positives"], list) and rule["false_positives"]
 
+    kinds = KINDS & rule.keys()
+    assert len(kinds) == 1, f"need exactly one of {sorted(KINDS)}, found {sorted(kinds)}"
+    if "metric_filter" in rule:
+        mf = rule["metric_filter"]
+        assert rule["log_source"] == "cloudtrail", "metric filters run on the CloudTrail log group"
+        assert rule["response"] == "notify", "alarms publish to SNS; they cannot drive containment"
+        assert isinstance(mf["match"], dict) and mf["match"]
+        assert all(re.fullmatch(r"[A-Za-z.]+", k) for k in mf["match"])
+        assert int(mf["threshold"]) >= 1
+        assert int(mf["period_seconds"]) in {60, 300, 900, 3600}
+
 
 @pytest.mark.parametrize("path", RULE_FILES, ids=lambda p: p.stem)
 def test_event_pattern_matches_log_source(path):
     rule = load(path)
+    if "event_pattern" not in rule:
+        pytest.skip("count rule (metric_filter)")
     pattern = rule["event_pattern"]
 
     assert "source" in pattern and "detail-type" in pattern

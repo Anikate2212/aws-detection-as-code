@@ -1,7 +1,8 @@
 # Detection rule files
 
-One YAML file per detection. Terraform turns each file into an EventBridge
-rule (`terraform/modules/detections`). CI checks every file against the
+One YAML file per detection. Terraform turns each file into either an
+EventBridge rule (single-event rules) or a metric filter and alarm (count
+rules) (`terraform/modules/detections`). CI checks every file against the
 schema below (`tests/test_detection_files.py`).
 
 | Field | Required | Meaning |
@@ -16,7 +17,8 @@ schema below (`tests/test_detection_files.py`).
 | `simulation.tool` | yes | e.g. `stratus-red-team` |
 | `simulation.technique` | yes | Tool-specific technique ID |
 | `log_source` | yes | `cloudtrail` or `guardduty` |
-| `event_pattern` | yes | EventBridge event pattern, passed through unchanged |
+| `event_pattern` | one of | Single-event rule: EventBridge event pattern, passed through unchanged |
+| `metric_filter` | one of | Count rule: `match` (CloudTrail fields that must all be equal), `threshold`, `period_seconds`. Becomes a CloudWatch Logs metric filter on the baseline trail log group plus an alarm to the alert topic. `notify` only. |
 | `expected_evidence` | yes | Which log fields prove the technique ran |
 | `false_positives` | yes | At least one note on benign causes |
 | `response` | yes | `notify` or `contain` |

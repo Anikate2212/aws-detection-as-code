@@ -24,3 +24,13 @@ variable "dlq_arn" {
 variable "dlq_url" {
   type = string
 }
+
+variable "cloudtrail_log_group_name" {
+  description = "Baseline CloudTrail log group that count rules filter"
+  type        = string
+}
+
+variable "alert_topic_arn" {
+  description = "SNS topic that count-rule alarms publish to"
+  type        = string
+}

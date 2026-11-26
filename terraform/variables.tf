@@ -26,3 +26,9 @@ variable "protected_users" {
   type        = list(string)
   default     = ["anikate-cli"]
 }
+
+variable "cloudtrail_log_group_name" {
+  description = "CloudWatch Logs group the baseline trail delivers to (count rules filter it)"
+  type        = string
+  default     = "/aws/cloudtrail/cloud-security-baseline"
+}

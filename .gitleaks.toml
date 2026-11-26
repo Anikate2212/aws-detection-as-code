@@ -17,9 +17,16 @@ keywords = ["arn:aws"]
   [[rules.allowlists]]
   regexes = ['''123456789012''']
 
-# Placeholders that tools/make_fixture.py writes when it redacts a real
-# event. They are shaped like real IDs on purpose so the fixture stays
-# realistic. Only this exact string is allowed; any other AKIA... key fails.
+# Known non-secrets in test fixtures. Each entry is an exact, anchored
+# value, so anything else of the same shape still fails.
+#  - make_fixture.py redaction placeholders: shaped like real IDs on purpose
+#    so the fixture stays realistic.
+#  - Post-quantum TLS key-exchange group names that CloudTrail records in
+#    tlsDetails.keyExchange. The field name contains "key", so the
+#    generic-api-key rule flags the algorithm name.
 [allowlist]
-description = "make_fixture.py redaction placeholders"
-regexes = ['''^(AKIA|ASIA|AIDA|AROA)EXAMPLEEXAMPLE00$''']
+description = "Fixture placeholders and TLS key-exchange group names"
+regexes = [
+  '''^(AKIA|ASIA|AIDA|AROA)EXAMPLEEXAMPLE00$''',
+  '''^(X25519MLKEM768|SecP256r1MLKEM768|SecP384r1MLKEM1024)$''',
+]

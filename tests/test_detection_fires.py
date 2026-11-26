@@ -68,11 +68,24 @@ def test_tested_rules_have_a_fixture(rule_id):
     )
 
 
+def metric_filter_matches(match: dict, record: dict) -> bool:
+    """CloudWatch Logs JSON filter { ($.a = "x") && ($.b = "y") } on one record."""
+    return all(record.get(k) == v for k, v in match.items())
+
+
+def fires(rule: dict, event: dict) -> bool:
+    if "metric_filter" in rule:
+        # Count rules read the raw CloudTrail record from the log group,
+        # which is the envelope's "detail".
+        return metric_filter_matches(rule["metric_filter"]["match"], event["detail"])
+    return matches(rule["event_pattern"], event)
+
+
 @pytest.mark.parametrize("path", FIXTURES, ids=lambda p: p.stem)
 def test_rule_fires_on_captured_event(path):
     assert path.stem in RULES, f"fixture {path.name} has no matching rule file"
     event = json.loads(path.read_text())
-    assert matches(RULES[path.stem]["event_pattern"], event)
+    assert fires(RULES[path.stem], event)
 
 
 @pytest.mark.parametrize("path", FIXTURES, ids=lambda p: p.stem)
@@ -85,7 +98,7 @@ def test_rule_ignores_benign_variant(path):
     event = json.loads(path.read_text())
     benign = copy.deepcopy(event)
     benign["detail"]["eventName"] = "DescribeTrails"
-    assert not matches(RULES[path.stem]["event_pattern"], benign)
+    assert not fires(RULES[path.stem], benign)
 
 
 def test_no_real_account_id_in_fixtures():
@@ -97,7 +110,7 @@ def test_no_real_account_id_in_fixtures():
 @pytest.mark.parametrize("path", FIXTURES, ids=lambda p: p.stem)
 def test_rule_ignores_failed_call_when_pattern_excludes_errors(path):
     """A denied attempt (errorCode set) must not trigger containment rules."""
-    pattern = RULES[path.stem]["event_pattern"]
+    pattern = RULES[path.stem].get("event_pattern", {})
     if pattern.get("detail", {}).get("errorCode") != [{"exists": False}]:
         pytest.skip("rule does not exclude failed calls")
     event = json.loads(path.read_text())

@@ -7,6 +7,11 @@
 # filter only produces a count, so a responder would have to go back and
 # search the logs to learn who did what.
 #
+# Count rules (metric_filter in the YAML) are the exception: "many events in
+# a window" cannot be expressed as an event pattern, so they become a
+# CloudWatch Logs metric filter on the baseline trail's log group plus an
+# alarm. The trade-off is that an alarm carries a count, not the event.
+#
 # The rule file is the source of truth. Terraform only reads it.
 # ==========================================================================
 
@@ -17,6 +22,9 @@ locals {
     for f in local.files :
     trimsuffix(f, ".yml") => yamldecode(file("${var.detections_dir}/${f}"))
   }
+
+  event_rules = { for k, d in local.detections : k => d if can(d.event_pattern) }
+  count_rules = { for k, d in local.detections : k => d if can(d.metric_filter) }
 
   # Rule metadata handed to the triage Lambda with every matched event.
   metadata = {
@@ -32,7 +40,7 @@ locals {
 }
 
 resource "aws_cloudwatch_event_rule" "detection" {
-  for_each = local.detections
+  for_each = local.event_rules
 
   name        = "${var.project_name}-${each.value.id}"
   description = substr("${each.value.attack.technique_id} ${each.value.title}", 0, 512)
@@ -52,7 +60,7 @@ resource "aws_cloudwatch_event_rule" "detection" {
 # from the YAML file, so the Lambda knows which detection fired without
 # looking anything up. <aws.events.event.json> is the full original event.
 resource "aws_cloudwatch_event_target" "triage" {
-  for_each = local.detections
+  for_each = local.event_rules
 
   rule      = aws_cloudwatch_event_rule.detection[each.key].name
   target_id = "triage"
@@ -74,7 +82,7 @@ resource "aws_cloudwatch_event_target" "triage" {
 
 # Lambda resource policy: each rule may invoke the function, nothing else.
 resource "aws_lambda_permission" "triage" {
-  for_each = local.detections
+  for_each = local.event_rules
 
   statement_id  = "AllowEventBridge-${each.key}"
   action        = "lambda:InvokeFunction"
@@ -104,4 +112,46 @@ data "aws_iam_policy_document" "dlq" {
 resource "aws_sqs_queue_policy" "dlq" {
   queue_url = var.dlq_url
   policy    = data.aws_iam_policy_document.dlq.json
+}
+
+# ---- Count rules: metric filter + alarm ----------------------------------
+resource "aws_cloudwatch_log_metric_filter" "count" {
+  for_each = local.count_rules
+
+  name           = "${var.project_name}-${each.value.id}"
+  log_group_name = var.cloudtrail_log_group_name
+  pattern = format("{ %s }", join(" && ", [
+    for field, value in each.value.metric_filter.match : format("($.%s = \"%s\")", field, value)
+  ]))
+
+  metric_transformation {
+    name          = each.value.id
+    namespace     = "DetectionAsCode"
+    value         = "1"
+    default_value = "0"
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "count" {
+  for_each = local.count_rules
+
+  alarm_name          = "${var.project_name}-${each.value.id}"
+  alarm_description   = substr("${each.value.attack.technique_id} ${each.value.title}. Find the caller with the Logs Insights query in the README.", 0, 1024)
+  namespace           = "DetectionAsCode"
+  metric_name         = each.value.id
+  statistic           = "Sum"
+  period              = each.value.metric_filter.period_seconds
+  evaluation_periods  = 1
+  threshold           = each.value.metric_filter.threshold
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  treat_missing_data  = "notBreaching"
+  alarm_actions       = [var.alert_topic_arn]
+
+  tags = {
+    DetectionId     = each.value.id
+    AttackTechnique = each.value.attack.technique_id
+    Severity        = each.value.severity
+  }
+
+  depends_on = [aws_cloudwatch_log_metric_filter.count]
 }

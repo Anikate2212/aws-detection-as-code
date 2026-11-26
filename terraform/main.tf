@@ -18,6 +18,10 @@ data "aws_sns_topic" "alerts" {
   name = var.alert_topic_name
 }
 
+data "aws_cloudwatch_log_group" "trail" {
+  name = var.cloudtrail_log_group_name
+}
+
 data "aws_kms_key" "alerts" {
   key_id = var.alert_kms_key_id
 }
@@ -40,4 +44,7 @@ module "detections" {
   triage_function_name = module.responder.function_name
   dlq_arn              = module.responder.dlq_arn
   dlq_url              = module.responder.dlq_url
+
+  cloudtrail_log_group_name = data.aws_cloudwatch_log_group.trail.name
+  alert_topic_arn           = data.aws_sns_topic.alerts.arn
 }
